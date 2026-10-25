@@ -1,80 +1,21 @@
-# deber2
+## Preguntas de Análisis
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+### 1. ¿En qué parte del ejercicio se aplica IoC y en cuál DI?
+* **Inversión de Control (IoC):** Es el principio de diseño donde se delega la responsabilidad de crear y administrar los objetos a un tercero, en este caso al contenedor de componentes ArC de Quarkus. Se aplica al anotar las clases con `@ApplicationScoped` y `@Dependent` y no utilizar en ningún momento la palabra reservada `new` para instanciar los servicios.
+* **Inyección de Dependencias (DI):** Es el patrón de diseño mediante el cual el contenedor entrega las dependencias necesarias a una clase. Se aplica en `VentaService` de dos formas:
+  * **Por atributo:** Usando `@Inject` sobre los atributos `descuentoRegular` y `descuentoVip` (y en `Main` para `ventaService` y `auditoriaMain`).
+  * **Por constructor:** En el constructor `public VentaService(Auditoria auditoria)`, donde el contenedor inyecta la dependencia `Auditoria`.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+### 2. ¿Qué función cumplen los Qualifiers y por qué son necesarios?
+Los Qualifiers (`@Named("regular")` y `@Named("vip")`) sirven para identificar y diferenciar qué implementación específica de una interfaz se desea inyectar. Son necesarios porque tanto `DescuentoRegular` como `DescuentoVIP` implementan la misma interfaz `CalculadoraDescuento`, y el contenedor necesita saber cuál de las dos asignar a cada atributo en `VentaService`.
 
-## Running the application in dev mode
+### 3. ¿Cuál es la diferencia entre `@ApplicationScoped` y `@Dependent`?
+El ámbito define el tiempo de vida de los componentes:
+* **`@ApplicationScoped`:** El contenedor crea una sola instancia compartida para toda la aplicación y la mantiene viva durante toda la ejecución del programa (se observa que el `UUID` es siempre el mismo en todas las ventas).
+* **`@Dependent`:** No comparte una única instancia global; el contenedor crea una instancia nueva cada vez que se inyecta en una clase distinta y su tiempo de vida depende del componente donde fue inyectado (por ejemplo, el `UUID` de `Auditoria` en `Main` es distinto al `UUID` de `Auditoria` dentro de `VentaService`).
 
-You can run your application in dev mode that enables live coding using:
+### 4. ¿Por qué las instancias `@ApplicationScoped` pueden reutilizarse entre varias ventas?
+Porque tienen un ámbito de nivel de aplicación donde el contenedor mantiene una única instancia en memoria para toda la lógica de negocio. Como `VentaService`, `DescuentoRegular` y `DescuentoVIP` solo reciben el monto por parámetro y calculan el descuento sin guardar datos de un cliente específico en sus atributos, la misma instancia puede reutilizarse en las 4 ventas sin mezclar información.
 
-```shell script
-./mvnw quarkus:dev
-```
-
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
-
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
-./mvnw package
-```
-
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
-
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/deber2-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## Related Guides
-
-- REST ([guide](https://quarkus.io/guides/rest)): Build RESTful web services and APIs using Jakarta REST (formerly JAX-RS)
-- REST Jackson ([guide](https://quarkus.io/guides/rest#json-serialisation)): Jackson serialization support for Quarkus REST. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it
-- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): Simplified JPA/Hibernate data access layer with active record and repository patterns
-- SmallRye Context Propagation ([guide](https://quarkus.io/guides/context-propagation)): Propagate contexts between managed threads in reactive applications
-- JDBC Driver - PostgreSQL ([guide](https://quarkus.io/guides/datasource)): Connect to the PostgreSQL database via JDBC
-
-## Provided Code
-
-### Hibernate ORM
-
-Create your first JPA entity
-
-[Related guide section...](https://quarkus.io/guides/hibernate-orm)
-
-
-[Related Hibernate with Panache section...](https://quarkus.io/guides/hibernate-orm-panache)
-
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+### 5. ¿Qué sucedería si se elimina el Qualifier de un punto de inyección de `CalculadoraDescuento`?
+Se produciría un error de ambigüedad al ejecutar o compilar la aplicación (`AmbiguousResolutionException`), ya que el contenedor ArC encontraría dos clases que implementan `CalculadoraDescuento` (`DescuentoRegular` y `DescuentoVIP`) y no sabría cuál de las dos inyectar.
