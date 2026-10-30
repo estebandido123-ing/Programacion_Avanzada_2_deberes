@@ -4,15 +4,12 @@ import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
 import io.quarkus.runtime.annotations.QuarkusMain;
 import jakarta.inject.Inject;
- 
+
 @QuarkusMain
-public class Main implements QuarkusApplication{
- 
-    @Inject
-    private VentaService ventaService;
+public class Main implements QuarkusApplication {
 
     @Inject
-    private Auditoria auditoriaMain;
+    private ConsultaService consultaService;
 
     public static void main(String[] args) {
         Quarkus.run(Main.class, args);
@@ -20,22 +17,15 @@ public class Main implements QuarkusApplication{
 
     @Override
     public int run(String... args) {
-        System.out.println("Iniciando Aplicacion Quarkus - Simulador de Descuentos");
-        this.auditoriaMain.registrar("Inicio de la aplicación desde Main");
+        System.out.println("Iniciando Aplicacion quarkus");
 
-        // Ejecución de las 4 ventas predefinidas
-        this.ventaService.procesarVenta(1, "REGULAR", 100.00);
-        this.ventaService.procesarVenta(2, "VIP", 200.00);
-        this.ventaService.procesarVenta(3, "REGULAR", 300.00);
-        this.ventaService.procesarVenta(4, "VIP", 500.00);
+        ConsultaMedica consulta = new ConsultaMedica("Ana Gomez", "Cardiologia", 50, "0912345678");
+        consulta.setUsuarioTelegram("@anagomez");
+        this.consultaService.registrar(consulta, null);
 
-        System.out.println("--------------------------------------------------");
-        this.auditoriaMain.registrar("Fin de la ejecución de ventas");
-
-        // El ámbito: es el tiempo de vida de los componentes
-        // El contexto: es la situación en la que se encuentra el componente
+        CitaMedica cita = new CitaMedica("Carlos Perez", "Odontologia", 35, "0987654321");
+        cita.setUsuarioTelegram("@carlosperez");
 
         return 0;
     }
- 
 }
